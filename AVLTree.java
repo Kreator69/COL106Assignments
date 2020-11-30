@@ -59,16 +59,16 @@ public class AVLTree extends BSTree {
         return (this.key == e.key && this.address == e.address && this.size == e.size);
     }
 
-    private int updateHeight(){
-        return (Math.max(height(this.right), height(this.left)) + 1);
+    private void updateHeight(){
+        this.height = (Math.max(height(this.right), height(this.left)) + 1);
     }
 
     private void checkBalance(AVLTree node){
         if(node.parent == null) return;
+        node.updateHeight();
         if( ( height(node.left) - height(node.right)) > 1 || ( height(node.left) - height(node.right) ) < -1 ){
             rebalance(node);
         }
-        node.updateHeight();
         checkBalance(node.parent);
     }
 
@@ -91,6 +91,9 @@ public class AVLTree extends BSTree {
         AVLTree temp = node.left;
         node.left = temp.right;
         temp.right = node;
+        if(node.parent.left == node) node.parent.left = temp;
+        else if(node.parent.right == node) node.parent.right = temp;
+        if(node.left != null) node.left.parent = node;
         temp.parent = node.parent;
         node.parent = temp;
         node.updateHeight();
@@ -102,6 +105,9 @@ public class AVLTree extends BSTree {
         AVLTree temp = node.right;
         node.right = temp.left;
         temp.left = node;
+        if(node.parent.left == node) node.parent.left = temp;
+        else if(node.parent.right == node) node.parent.right = temp;
+        if(node.right != null) node.right.parent = node;
         temp.parent = node.parent;
         node.parent = temp;
         node.updateHeight();
@@ -344,7 +350,7 @@ public class AVLTree extends BSTree {
         AVLTree curr = this.getFirst();
         while(curr != null){
             if(curr.parent != null){
-                if ( this.isHeightBalanced() == false) return false;
+                if (curr.isHeightBalanced() == false) return false;
             }
             if(curr.parent == null) return false;
             if(curr.parent.parent == null){
