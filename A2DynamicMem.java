@@ -43,7 +43,7 @@ public class A2DynamicMem extends A1DynamicMem {
         }
         else if(this.type == 3){
             Dictionary temp = freeBlk.getFirst();
-            Dictionary newTree = new AVLree();
+            Dictionary newTree = new AVLTree();
             while(temp != null){
                 newTree.Insert(temp.address, temp.size, temp.address);
                 temp = temp.getNext();

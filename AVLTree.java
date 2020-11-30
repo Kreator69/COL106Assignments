@@ -1,5 +1,6 @@
 // Class: Height balanced AVL Tree
 // Binary Search Tree
+import java.util.*;
 
 public class AVLTree extends BSTree {
     
@@ -26,15 +27,15 @@ public class AVLTree extends BSTree {
     // Some of the functions may be directly inherited from the BSTree class and nothing needs to be done for those.
     // Remove the functions, to not override the inherited functions.
     
-    private BSTree getSentinel(){
-        BSTree curr = this;
+    private AVLTree getSentinel(){
+        AVLTree curr = this;
         while(curr.parent != null){
             curr = curr.parent;
         }
         return curr;
     }
 
-    private BSTree getRoot(){
+    private AVLTree getRoot(){
         if(this.getSentinel() == null) return null;
         return this.getSentinel().right;
     }
@@ -115,7 +116,7 @@ public class AVLTree extends BSTree {
     }
 
     private AVLTree rightLeftRotate(AVLTree node){
-        node.right = righttRotate(node.right);
+        node.right = rightRotate(node.right);
         AVLTree temp = leftRotate(node);
         return temp;
     }
@@ -138,7 +139,7 @@ public class AVLTree extends BSTree {
     }
 
     private AVLTree add(int address, int size, int key){
-        if(this.Compare(address, key) == 1){
+        if(this.Compare(address, key) == 2){
             if(this.right == null){
                 AVLTree newNode = new AVLTree(address, size, key);
                 this.right = newNode;
@@ -164,7 +165,7 @@ public class AVLTree extends BSTree {
         AVLTree node = this.getSentinel();
         if (curr == null) return false;
         else{
-            while(curr.ifExact(e) == false && curr != null){
+            while(curr != null && curr.ifExact(e) == false ){
                 if(curr.Compare(e.address, e.key) == 1){
                     node = curr;
                     curr = curr.left;
@@ -251,10 +252,10 @@ public class AVLTree extends BSTree {
         }
     }
 
-    public BSTree Find(int key, boolean exact)
+    public AVLTree Find(int key, boolean exact)
     {
-        BSTree curr = this.getRoot();
-        BSTree ans = null;
+        AVLTree curr = this.getRoot();
+        AVLTree ans = null;
         while(curr != null){
             if(curr.Compare(0, key) == 3){
                 ans = curr;
@@ -273,9 +274,9 @@ public class AVLTree extends BSTree {
         }
     }
 
-    public BSTree getFirst()
+    public AVLTree getFirst()
     {
-        BSTree curr = this.getRoot();
+        AVLTree curr = this.getRoot();
         if(curr == null) return null;
         else{
             while(curr.left != null) curr = curr.left;
@@ -283,11 +284,11 @@ public class AVLTree extends BSTree {
         }
     }
 
-    public BSTree getNext()
+    public AVLTree getNext()
     {
         if(this.right == null){
-            BSTree curr = this;
-            BSTree node = this.parent;
+            AVLTree curr = this;
+            AVLTree node = this.parent;
             if(this.parent == null) return null;
             else{
                 while(node.left != curr && node.parent != null){
@@ -299,14 +300,62 @@ public class AVLTree extends BSTree {
             }
         }
         else{
-            BSTree curr = this.right;
+            AVLTree curr = this.right;
             while(curr.left != null) curr = curr.left;
             return curr;
         }
     }
 
+    private boolean ifParent(){
+        if(this.left != null && this.right != null){
+            if(this.left.parent != this || this.right.parent != this) return false;
+            return (this.left.ifParent() && this.right.ifParent());
+        }
+        else if(this.left == null && this.right != null){
+            if(this.right.parent != this) return false;
+            return this.right.ifParent();
+        }
+        else if(this.left != null && this.right == null){
+            if(this.left.parent != this) return false;
+            return this.left.ifParent();
+        }
+        else return true;
+    }
+
+    private boolean checkCycleRoot(){
+        AVLTree curr1 = this;
+        AVLTree curr2 = this;
+        while(curr2.parent != null && curr2.parent.parent != null){
+            curr1 = curr1.parent;
+            curr2 = curr2.parent.parent;
+            if(curr1 == curr2) return false;
+        }
+        return curr2.ifParent();
+    }
+
+    private boolean isHeightBalanced(){
+        if(( height(this.left) - height(this.right)) > 1 || ( height(this.left) - height(this.right) ) < -1) return false;
+        else return true;
+    }
+
     public boolean sanity()
     {
+        if(this.checkCycleRoot() == false) return false;
+        AVLTree curr = this.getFirst();
+        while(curr != null){
+            if(curr.parent != null){
+                if ( this.isHeightBalanced() == false) return false;
+            }
+            if(curr.parent == null) return false;
+            if(curr.parent.parent == null){
+                if(curr.parent.key != -1 || curr.parent.address != -1 || curr.parent.size != -1 || curr.parent.left != null) return false;
+            }
+            if( (curr.left != null && curr.left.parent != curr) || (curr.right != null &&curr.right.parent != curr)) return false;
+            if(curr.key < 0 || curr.address < 0 || curr.size < 0) return false;
+            if( curr.left != null && curr.Compare(curr.left.address, curr.left.key) != 1) return false; 
+            if( curr.right != null && curr.Compare(curr.right.address, curr.right.key) != 2) return false;
+            curr = curr.getNext();
+        }
         return true;
     }
 }
