@@ -49,41 +49,106 @@ public class AVLTree extends BSTree {
         }
     }
 
+    public int height(){
+        if(this == null) return 0;
+        else return this.height;
+    }
+
     private boolean ifExact(Dictionary e){
         return (this.key == e.key && this.address == e.address && this.size == e.size);
     }
 
-    private void checkBalance(AVLTree node){
-        if( (node.left.height - node.right.height) > 1 || (node.left.height - node.right.height) < -1 ){
+    private void checkBalance(AVLTree node){ //should write static?
+        if( (node.left.height() - node.right.height()) > 1 || (node.left.height() - node.right.height()) < -1 ){
             rebalance(node);
         }
         if(node.parent == null) return;
+        node.height++; // yeh hai toh galat 
         checkBalance(node.parent);
     }
 
-    private void rebalance(AVLTree node){
-        if((node.left.height - node.right.height) > 1){
-            if(node.left.left.height > node.left.right.height){
+    private void rebalance(AVLTree node){ //should write static?
+        if((node.left.height() - node.right.height()) > 1){
+            if(node.left.left.height() > node.left.right.height()){
                 node = rightRotate(node);
             }
             else node = leftRightRotate(node);
         }
         else{
-            if(node.right.right.height > node.right.left.height){
+            if(node.right.right.height() > node.right.left.height()){
                 node = leftRotate(node);
             }
             else node = rightLeftRotate(node);
         }
-        if(node.parent == null) root = node;
+        if(node.parent == null) root = node; // kuch aur likhna hoga yahaan
     }
 
     private AVLTree rightRotate(AVLTree node){
-        
+        AVLTree temp = node.left;
+        node.left = temp.right;
+        temp.right = node;
+        temp.parent = node.parent;
+        node.parent = temp;
+        node.height --; // correct?
+        return temp;
+    }
+
+    private AVLTree leftRotate(AVLTree node){
+        AVLTree temp = node.right;
+        node.right = temp.left;
+        temp.left = node;
+        temp.parent = node.parent;
+        node.parent = temp;
+        node.height --; // correct?
+        return temp;
+    }
+
+    private AVLTree leftRightRotate(AVLTree node){
+        node.left = leftRotate(node.left);
+        AVLTree temp = rightRotate(node);
+        return temp;
+    }
+
+    private AVLTree rightLeftRotate(AVLTree node){
+        node.right = righttRotate(node.right);
+        AVLTree temp = leftRotate(node);
+        return temp;
     }
 
     public AVLTree Insert(int address, int size, int key) 
     {
+        AVLTree curr = this.getSentinel();
+        if(curr.right == null){
+            AVLTree newNode = new AVLTree(address, size, key);
+            curr.right = newNode;
+            newNode.parent = curr;
+            newNode.height++;
+            curr.right.height++;
+            return newNode;
+        }
+        else curr.right.add(address, size, key);
         return null;
+    }
+
+    private AVLTree add(int address, int size, int key){
+        if(this.Compare(address, key) == 1){
+            if(this.right == null){
+                AVLTree newNode = new AVLTree(address, size, key);
+                this.right = newNode;
+                newNode.parent = this;
+            }
+            else this.right.add(address, size, key);
+        }
+        else{
+            if(this.left == null){
+                AVLTree newNode = new AVLTree(address, size, key);
+                this.left = newNode;
+                newNode.parent = this;
+            }
+            else this.left.add(address, size, key);
+        }
+        checkBalance(newNode);
+        return newNode; // this is correct, right?
     }
 
     public boolean Delete(Dictionary e)
