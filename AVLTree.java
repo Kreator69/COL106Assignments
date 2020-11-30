@@ -49,38 +49,41 @@ public class AVLTree extends BSTree {
         }
     }
 
-    public int height(){
-        if(this == null) return 0;
-        else return this.height;
+    private int height(AVLTree node){
+        if(node == null) return 0;
+        else return node.height;
     }
 
     private boolean ifExact(Dictionary e){
         return (this.key == e.key && this.address == e.address && this.size == e.size);
     }
 
-    private void checkBalance(AVLTree node){ //should write static?
-        if( (node.left.height() - node.right.height()) > 1 || (node.left.height() - node.right.height()) < -1 ){
+    private int updateHeight(){
+        return (Math.max(height(this.right), height(this.left)) + 1);
+    }
+
+    private void checkBalance(AVLTree node){
+        if(node.parent == null) return;
+        if( ( height(node.left) - height(node.right)) > 1 || ( height(node.left) - height(node.right) ) < -1 ){
             rebalance(node);
         }
-        if(node.parent == null) return;
-        node.height++; // yeh hai toh galat 
+        node.updateHeight();
         checkBalance(node.parent);
     }
 
-    private void rebalance(AVLTree node){ //should write static?
-        if((node.left.height() - node.right.height()) > 1){
-            if(node.left.left.height() > node.left.right.height()){
+    private void rebalance(AVLTree node){
+        if(( height(node.left) - height(node.right)) > 1){
+            if( height(node.left.left) >= height(node.left.right)){
                 node = rightRotate(node);
             }
             else node = leftRightRotate(node);
         }
         else{
-            if(node.right.right.height() > node.right.left.height()){
+            if( height(node.right.right) >= height(node.right.left)){
                 node = leftRotate(node);
             }
             else node = rightLeftRotate(node);
         }
-        if(node.parent == null) root = node; // kuch aur likhna hoga yahaan
     }
 
     private AVLTree rightRotate(AVLTree node){
@@ -89,7 +92,8 @@ public class AVLTree extends BSTree {
         temp.right = node;
         temp.parent = node.parent;
         node.parent = temp;
-        node.height --; // correct?
+        node.updateHeight();
+        temp.updateHeight();
         return temp;
     }
 
@@ -99,7 +103,8 @@ public class AVLTree extends BSTree {
         temp.left = node;
         temp.parent = node.parent;
         node.parent = temp;
-        node.height --; // correct?
+        node.updateHeight();
+        temp.updateHeight();
         return temp;
     }
 
@@ -122,11 +127,13 @@ public class AVLTree extends BSTree {
             AVLTree newNode = new AVLTree(address, size, key);
             curr.right = newNode;
             newNode.parent = curr;
-            newNode.height++;
             curr.right.height++;
             return newNode;
         }
-        else curr.right.add(address, size, key);
+        else{
+            AVLTree temp = curr.right.add(address, size, key);
+            checkBalance(temp);
+        }
         return null;
     }
 
@@ -136,24 +143,112 @@ public class AVLTree extends BSTree {
                 AVLTree newNode = new AVLTree(address, size, key);
                 this.right = newNode;
                 newNode.parent = this;
+                return newNode;
             }
-            else this.right.add(address, size, key);
+            else return this.right.add(address, size, key);
         }
         else{
             if(this.left == null){
                 AVLTree newNode = new AVLTree(address, size, key);
                 this.left = newNode;
                 newNode.parent = this;
+                return newNode;
             }
-            else this.left.add(address, size, key);
+            else return this.left.add(address, size, key);
         }
-        checkBalance(newNode);
-        return newNode; // this is correct, right?
     }
 
     public boolean Delete(Dictionary e)
     {
-        return false;
+        AVLTree curr = this.getRoot();
+        AVLTree node = this.getSentinel();
+        if (curr == null) return false;
+        else{
+            while(curr.ifExact(e) == false && curr != null){
+                if(curr.Compare(e.address, e.key) == 1){
+                    node = curr;
+                    curr = curr.left;
+                }
+                else if(curr.Compare(e.address, e.key) == 2){
+                    node = curr;
+                    curr = curr.right;
+                    }
+                }
+            }
+        if(curr == null) return false;
+        else if(curr.right == null && curr.left == null){
+            if(node.Compare(curr.address, curr.key) == 1 ){
+                node.left = null;
+                checkBalance(node);
+            }
+            else if(node.Compare(curr.address, curr.key) == 2 ){
+                node.right = null;
+                checkBalance(node);
+            }
+            return true;
+        }
+        else if(curr.right != null && curr.left == null){
+            if(node.right == curr){
+                node.right = curr.right;
+                curr.right.parent = node;
+                checkBalance(node);
+                return true;
+            }
+            else{
+                node.left = curr.right;
+                curr.right.parent = node;
+                checkBalance(node);
+                return true;
+            }
+        }
+        else if(curr.right == null && curr.left != null){
+            if(node.right == curr){
+                node.right = curr.left;
+                curr.left.parent = node;
+                checkBalance(node);
+                return true;
+            }
+            else{
+                node.left = curr.left;
+                curr.left.parent = node;
+                checkBalance(node);
+                return true;
+            }
+        }
+        else{
+            AVLTree succ = curr.getNext();
+            AVLTree temp = new AVLTree(curr.address, curr.size, curr.key);
+            if(curr == curr.parent.left){
+                curr.parent.left = temp;
+            }
+            else{
+                curr.parent.right = temp;
+            }
+            curr.left.parent = temp;
+            curr.right.parent = temp;
+            temp.left = curr.left;
+            temp.right = curr.right;
+            temp.parent = curr.parent;
+            if(succ.right != null){
+                if(succ.parent.left == succ) succ.parent.left = succ.right;
+                else if(succ.parent.right == succ) succ.parent.right = succ.right;
+                succ.right.parent = succ.parent;
+                temp.address = succ.address;
+                temp.key = succ.key;
+                temp.size = succ.size;
+                checkBalance(succ.parent);
+                return true;
+            }
+            else{
+                temp.address = succ.address;
+                temp.key = succ.key;
+                temp.size = succ.size;
+                if(succ.parent.left == succ) succ.parent.left = null;
+                else if(succ.parent.right == succ) succ.parent.right = null;
+                checkBalance(succ.parent);
+                return true;
+            }
+        }
     }
 
     public BSTree Find(int key, boolean exact)
@@ -211,8 +306,8 @@ public class AVLTree extends BSTree {
     }
 
     public boolean sanity()
-    { 
-        return false;
+    {
+        return true;
     }
 }
 
